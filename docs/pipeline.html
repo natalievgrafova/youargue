@@ -1,0 +1,581 @@
+<title>YouArgue Pipeline</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F6F7F9; --surface:#FFFFFF; --line:#DDE1E7; --line-soft:#EAEDF1;
+    --text:#161B22; --muted:#59636F; --faint:#8A939E;
+    --accent:#1F6E7C; --accent-soft:#E4F0F2;
+    --warn:#A8501E; --warn-soft:#F7EBE3;
+    --good:#2C7A52; --good-soft:#E6F1EA;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;
+    --cond:"IBM Plex Sans Condensed","IBM Plex Sans",sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#0D1117; --surface:#151B23; --line:#2A323C; --line-soft:#1F262E;
+      --text:#E3E8EF; --muted:#9AA5B1; --faint:#6E7A87;
+      --accent:#5FB3C4; --accent-soft:#123035;
+      --warn:#D98A5A; --warn-soft:#33221A;
+      --good:#6FBF95; --good-soft:#15291F;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0D1117; --surface:#151B23; --line:#2A323C; --line-soft:#1F262E;
+    --text:#E3E8EF; --muted:#9AA5B1; --faint:#6E7A87;
+    --accent:#5FB3C4; --accent-soft:#123035;
+    --warn:#D98A5A; --warn-soft:#33221A;
+    --good:#6FBF95; --good-soft:#15291F;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);
+       font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:56px 28px 96px}
+  .col{max-width:70ch}
+  h1{font-family:var(--cond);font-size:40px;line-height:1.1;font-weight:700;
+     letter-spacing:-.01em;margin:0 0 12px;text-wrap:balance}
+  h2{font-family:var(--cond);font-size:25px;font-weight:700;letter-spacing:-.005em;
+     margin:64px 0 6px;text-wrap:balance;scroll-margin-top:24px}
+  h3{font-family:var(--cond);font-size:18px;font-weight:600;margin:34px 0 6px}
+  p{margin:0 0 16px}
+  a{color:var(--accent)}
+  .eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;
+           text-transform:uppercase;color:var(--faint);margin:0 0 10px}
+  .lede{font-size:18px;color:var(--muted);margin-bottom:8px}
+  .rule{height:1px;background:var(--line);border:0;margin:34px 0 0}
+  code{font-family:var(--mono);font-size:.88em;background:var(--line-soft);
+       padding:1px 5px;border-radius:3px}
+  figure{margin:28px 0 12px;padding:22px 20px 14px;background:var(--surface);
+         border:1px solid var(--line);border-radius:6px;overflow-x:auto}
+  figure svg{display:block;max-width:100%;height:auto;color:var(--text);margin:0 auto}
+  figcaption{font-size:13.5px;color:var(--muted);margin-top:14px;
+             padding-top:12px;border-top:1px solid var(--line-soft)}
+  table{width:100%;border-collapse:collapse;margin:18px 0 8px;font-size:14.5px;
+        font-variant-numeric:tabular-nums}
+  th{font-family:var(--cond);font-weight:600;text-align:left;font-size:13px;
+     letter-spacing:.03em;text-transform:uppercase;color:var(--faint);
+     padding:0 12px 8px 0;border-bottom:1px solid var(--line)}
+  td{padding:9px 12px 9px 0;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  td.num{font-family:var(--mono);white-space:nowrap}
+  tr.lead td{font-weight:600}
+  .tag{display:inline-block;font-family:var(--mono);font-size:11px;padding:2px 7px;
+       border-radius:3px;letter-spacing:.02em;white-space:nowrap}
+  .tag-ok{background:var(--good-soft);color:var(--good)}
+  .tag-warn{background:var(--warn-soft);color:var(--warn)}
+  .tag-acc{background:var(--accent-soft);color:var(--accent)}
+  .note{border-left:2px solid var(--warn);background:var(--warn-soft);
+        padding:14px 18px;border-radius:0 4px 4px 0;margin:22px 0;font-size:15px}
+  .note b{font-family:var(--cond)}
+  .grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin:20px 0}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+  .card .k{font-family:var(--mono);font-size:22px;letter-spacing:-.02em}
+  .card .l{font-size:13px;color:var(--muted);margin-top:2px}
+  ul{margin:0 0 16px;padding-left:20px}
+  li{margin-bottom:7px}
+  .api{font-family:var(--mono);font-size:13.5px}
+  .api td{padding:8px 12px 8px 0}
+  footer{margin-top:72px;padding-top:20px;border-top:1px solid var(--line);
+         font-size:13px;color:var(--faint)}
+</style>
+<div class="wrap">
+<header class="col">
+  <p class="eyebrow">Argument mining on YouTube comments</p>
+  <h1>YouArgue Pipeline</h1>
+  <p class="lede">How the system collects videos, proposes topics for videos nobody annotated,
+  and scores relevance and stance &#8212; with what each model is worth, what is finished, what is
+  waiting, and the questions still open.</p>
+  <hr class="rule">
+</header>
+
+<section class="col">
+  <h2>How it works</h2>
+  <p>Two paths run through the same app. The <b>gold path</b> serves human annotations for the
+  videos annotated by hand. The <b>model path</b> serves predictions for any video, including ones
+  no annotator has seen. Both answer the same endpoint; a <code>source</code> parameter chooses
+  between them, and gold is the default, so the app behaves exactly as before when no predictions
+  exist.</p>
+  <p>No model runs while a page loads. Predictions are computed ahead of time on a GPU and shipped
+  as a file, which is why the app answers in milliseconds and needs no accelerator of its own.</p>
+</section>
+
+<figure>
+<svg viewBox="0 0 880 250" role="img" aria-label="Videos are fetched from four fixed channels, filtered by exact channel title, then the five busiest comment threads are pulled in full up to one hundred comments">
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="currentColor"></path>
+    </marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">
+    <rect x="8" y="46" width="150" height="58" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="83" y="70" text-anchor="middle" font-size="12.5">search.list</text>
+    <text x="83" y="88" text-anchor="middle" font-size="11" opacity=".72">q, date span, 50</text>
+
+    <rect x="196" y="46" width="150" height="58" rx="4" fill="none" stroke="#2E8FA0" stroke-width="1.6"></rect>
+    <text x="271" y="70" text-anchor="middle" font-size="12.5" fill="#2E8FA0">channel filter</text>
+    <text x="271" y="88" text-anchor="middle" font-size="11" fill="#2E8FA0" opacity=".8">exact title match</text>
+
+    <rect x="384" y="46" width="150" height="58" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="459" y="70" text-anchor="middle" font-size="12.5">videos.list</text>
+    <text x="459" y="88" text-anchor="middle" font-size="11" opacity=".72">views, likes, count</text>
+
+    <rect x="572" y="46" width="150" height="58" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="647" y="70" text-anchor="middle" font-size="12.5">commentThreads</text>
+    <text x="647" y="88" text-anchor="middle" font-size="11" opacity=".72">rank by replies</text>
+
+    <rect x="572" y="152" width="150" height="58" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="647" y="176" text-anchor="middle" font-size="12.5">comments.list</text>
+    <text x="647" y="194" text-anchor="middle" font-size="11" opacity=".72">replies, paged</text>
+
+    <rect x="760" y="99" width="112" height="58" rx="4" fill="none" stroke="#2E8FA0" stroke-width="1.6"></rect>
+    <text x="816" y="123" text-anchor="middle" font-size="12.5" fill="#2E8FA0">≤ 100</text>
+    <text x="816" y="141" text-anchor="middle" font-size="11" fill="#2E8FA0" opacity=".8">comments</text>
+
+    <line x1="158" y1="75" x2="190" y2="75" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></line>
+    <line x1="346" y1="75" x2="378" y2="75" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></line>
+    <line x1="534" y1="75" x2="566" y2="75" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></line>
+    <line x1="647" y1="104" x2="647" y2="146" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></line>
+    <line x1="722" y1="181" x2="790" y2="181" stroke="currentColor" stroke-width="1.2"></line>
+    <line x1="790" y1="181" x2="790" y2="163" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></line>
+    <line x1="722" y1="75" x2="790" y2="75" stroke="currentColor" stroke-width="1.2"></line>
+    <line x1="790" y1="75" x2="790" y2="93" stroke="currentColor" stroke-width="1.2" marker-end="url(#a1)"></line>
+
+    <text x="271" y="128" text-anchor="middle" font-size="10.5" opacity=".7">drops BBC News 中文,</text>
+    <text x="271" y="143" text-anchor="middle" font-size="10.5" opacity=".7">हिंदी, বাংলা, O&#8217;zbek</text>
+    <text x="647" y="126" text-anchor="middle" font-size="10.5" opacity=".7">top 5 threads</text>
+    <text x="83" y="128" text-anchor="middle" font-size="10.5" opacity=".7">cached 1 h</text>
+  </g>
+</svg>
+<figcaption><b>Video collection.</b> One search per channel over the chosen date span, then an
+exact <code>channelTitle</code> membership test — a substring test would let BBC News 中文, हिंदी and
+বাংলা through, which are separate channels in other languages. Comment threads are ranked by reply
+count and the five busiest are pulled <em>whole</em>, root plus every reply, because the English stance
+model reads the root comment as its context.</figcaption>
+</figure>
+
+<section class="col">
+  <h3>Where the topics come from</h3>
+  <p>Relevance and stance are both asked <em>about a topic</em>. An annotated video has a gold topic
+  list; a new video has none, and free generation is weak &#8212; the best target-generation arm
+  scores 0.27 F1. So the problem is inverted: keep a fixed pool of candidate issues, rank it against
+  the video, and extract the video-specific ones from the comments themselves.</p>
+</section>
+
+<figure>
+<svg viewBox="0 0 880 250" role="img" aria-label="Root comments are compared with a Wikipedia list of contested issues by cosine similarity, and the same root comments are run through YAKE; the two candidate lists are merged">
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="currentColor"></path>
+    </marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">
+    <rect x="8" y="86" width="176" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"></rect>
+    <text x="96" y="110" text-anchor="middle">root comments</text>
+    <text x="96" y="128" text-anchor="middle" font-size="11" opacity=".72">one per thread</text>
+
+    <rect x="248" y="10" width="180" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="338" y="34" text-anchor="middle">Wikipedia list</text>
+    <text x="338" y="52" text-anchor="middle" font-size="11" opacity=".72">contested issues</text>
+
+    <rect x="248" y="162" width="180" height="62" rx="4" fill="none" stroke="#2E8FA0" stroke-width="1.6"></rect>
+    <text x="338" y="186" text-anchor="middle" fill="#2E8FA0">YAKE</text>
+    <text x="338" y="204" text-anchor="middle" font-size="11" fill="#2E8FA0" opacity=".85">1&#8211;3 word phrases</text>
+
+    <rect x="492" y="86" width="176" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="580" y="110" text-anchor="middle">merge &amp; dedupe</text>
+    <text x="580" y="128" text-anchor="middle" font-size="11" opacity=".72">15 + 10</text>
+
+    <rect x="716" y="86" width="156" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="794" y="110" text-anchor="middle">candidate topics</text>
+    <text x="794" y="128" text-anchor="middle" font-size="11" opacity=".72">for this video</text>
+
+    <line x1="184" y1="106" x2="236" y2="60" stroke="currentColor" stroke-width="1.2" marker-end="url(#a2)"></line>
+    <line x1="184" y1="128" x2="236" y2="174" stroke="#2E8FA0" stroke-width="1.4" marker-end="url(#a2)"></line>
+    <line x1="428" y1="45" x2="466" y2="45" stroke="currentColor" stroke-width="1.2"></line>
+    <line x1="466" y1="45" x2="466" y2="105" stroke="currentColor" stroke-width="1.2"></line>
+    <line x1="466" y1="105" x2="486" y2="105" stroke="currentColor" stroke-width="1.2" marker-end="url(#a2)"></line>
+    <line x1="428" y1="193" x2="466" y2="193" stroke="#2E8FA0" stroke-width="1.4"></line>
+    <line x1="466" y1="193" x2="466" y2="133" stroke="#2E8FA0" stroke-width="1.4"></line>
+    <line x1="466" y1="133" x2="486" y2="133" stroke="#2E8FA0" stroke-width="1.4" marker-end="url(#a2)"></line>
+    <line x1="668" y1="117" x2="710" y2="117" stroke="currentColor" stroke-width="1.2" marker-end="url(#a2)"></line>
+
+    <text x="196" y="70" font-size="10.5" opacity=".75">cosine</text>
+    <text x="196" y="166" font-size="10.5" fill="#2E8FA0" opacity=".9">extract</text>
+    <text x="338" y="90" text-anchor="middle" font-size="10.5" opacity=".7">keep the 15 closest to these comments</text>
+    <text x="338" y="242" text-anchor="middle" font-size="10.5" fill="#2E8FA0" opacity=".9">phrases only this video produced</text>
+  </g>
+</svg>
+<figcaption><b>Topic candidates: two sources, one input.</b> Both start from the same text &#8212;
+the <b>root comment of every thread</b> on the video (up to 500), a broad sample of what is being
+discussed. Each entry in
+<a href="https://en.wikipedia.org/wiki/Wikipedia:List_of_controversial_issues">Wikipedia&#8217;s list
+of controversial issues</a> is embedded as a short sentence, each root comment likewise, and an entry
+scores by the <b>mean cosine similarity to the ten root comments it matches best</b> &#8212; so
+&#8220;Climate change&#8221; scores high when many comments discuss it and near zero when none do.
+The top 15 are kept. YAKE reads those same root comments and pulls out 10 keyphrases of one to three
+words, which is where the topics only this video produced come from. The two lists are merged and
+deduplicated into the candidates the relevance model is then asked about. The English pool is 1,477
+articles; Dutch has 935 of them via <code>langlinks</code>.</figcaption>
+</figure>
+
+<section class="col">
+  <h3>Scoring</h3>
+</section>
+
+<figure>
+<svg viewBox="0 0 880 250" role="img" aria-label="Pairs pass through a relevance model and a probability threshold, then surviving pairs pass through a stance model; each model receives a named context field">
+  <defs>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="currentColor"></path>
+    </marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">
+    <rect x="8" y="76" width="140" height="60" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="78" y="100" text-anchor="middle">pairs</text>
+    <text x="78" y="118" text-anchor="middle" font-size="11" opacity=".72">comment × topic</text>
+
+    <rect x="200" y="76" width="168" height="60" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="284" y="100" text-anchor="middle">relevance</text>
+    <text x="284" y="118" text-anchor="middle" font-size="11" opacity=".72">P(relevant)</text>
+
+    <rect x="420" y="76" width="120" height="60" rx="4" fill="none" stroke="#C2703C" stroke-width="1.6"></rect>
+    <text x="480" y="100" text-anchor="middle" fill="#C2703C">threshold</text>
+    <text x="480" y="118" text-anchor="middle" font-size="11" fill="#C2703C" opacity=".85">τ</text>
+
+    <rect x="592" y="76" width="150" height="60" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="667" y="100" text-anchor="middle">stance</text>
+    <text x="667" y="118" text-anchor="middle" font-size="11" opacity=".72">pro / con + conf</text>
+
+    <rect x="778" y="76" width="94" height="60" rx="4" fill="none" stroke="#2E8FA0" stroke-width="1.6"></rect>
+    <text x="825" y="100" text-anchor="middle" fill="#2E8FA0">app</text>
+    <text x="825" y="118" text-anchor="middle" font-size="11" fill="#2E8FA0" opacity=".8">CSV</text>
+
+    <line x1="148" y1="106" x2="194" y2="106" stroke="currentColor" stroke-width="1.2" marker-end="url(#a3)"></line>
+    <line x1="368" y1="106" x2="414" y2="106" stroke="currentColor" stroke-width="1.2" marker-end="url(#a3)"></line>
+    <line x1="540" y1="106" x2="586" y2="106" stroke="currentColor" stroke-width="1.2" marker-end="url(#a3)"></line>
+    <line x1="742" y1="106" x2="772" y2="106" stroke="currentColor" stroke-width="1.2" marker-end="url(#a3)"></line>
+
+    <rect x="200" y="10" width="168" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3" opacity=".75"></rect>
+    <text x="284" y="27" text-anchor="middle" font-size="11" opacity=".85">context: video title</text>
+    <text x="284" y="42" text-anchor="middle" font-size="10.5" opacity=".62">nl: description</text>
+    <line x1="284" y1="50" x2="284" y2="70" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#a3)"></line>
+
+    <rect x="592" y="10" width="150" height="40" rx="4" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3" opacity=".75"></rect>
+    <text x="667" y="27" text-anchor="middle" font-size="11" opacity=".85">context: root comment</text>
+    <text x="667" y="42" text-anchor="middle" font-size="10.5" opacity=".62">nl: title</text>
+    <line x1="667" y1="50" x2="667" y2="70" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#a3)"></line>
+
+    <line x1="480" y1="136" x2="480" y2="182" stroke="#C2703C" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a3)"></line>
+    <text x="492" y="186" font-size="11" fill="#C2703C">below τ — dropped, never scored for stance</text>
+    <text x="284" y="212" text-anchor="middle" font-size="11" opacity=".7">recall 0.88</text>
+    <text x="667" y="212" text-anchor="middle" font-size="11" opacity=".7">85 % agreement with gold</text>
+  </g>
+</svg>
+<figcaption><b>Two stages, one gate, and a context field each.</b> Both models are prompted with a
+named context alongside the comment and the topic &#8212; the English relevance model gets the video
+title, the English stance model the root comment, because that is what each was fine-tuned with.
+The threshold is the whole quality control: recall is high, so almost everything true survives, and
+τ decides how much noise comes with it.</figcaption>
+</figure>
+
+<figure>
+<svg viewBox="0 0 880 300" role="img" aria-label="Four stages: candidates, relevance scoring of every comment against every candidate, a final pass that reads the aggregate evidence and keeps a few topics, then stance on the survivors">
+  <defs>
+    <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="currentColor"></path>
+    </marker>
+  </defs>
+  <g font-family="IBM Plex Mono, monospace" font-size="12" fill="currentColor">
+    <text x="8" y="20" font-size="11" opacity=".6">1. candidates</text>
+    <rect x="8" y="30" width="150" height="60" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="83" y="54" text-anchor="middle">pool + YAKE</text>
+    <text x="83" y="72" text-anchor="middle" font-size="11" opacity=".72">40 topics</text>
+
+    <text x="196" y="20" font-size="11" opacity=".6">2. relevance model</text>
+    <rect x="196" y="30" width="176" height="60" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="284" y="54" text-anchor="middle">score every pair</text>
+    <text x="284" y="72" text-anchor="middle" font-size="11" opacity=".72">40 &times; 100 = 4,000</text>
+
+    <text x="410" y="20" font-size="11" fill="#2E8FA0" opacity=".85">3. final pass  &#8592; new</text>
+    <rect x="410" y="30" width="176" height="60" rx="4" fill="none" stroke="#2E8FA0" stroke-width="1.8"></rect>
+    <text x="498" y="54" text-anchor="middle" fill="#2E8FA0">keep or drop</text>
+    <text x="498" y="72" text-anchor="middle" font-size="11" fill="#2E8FA0" opacity=".85">40 &#8594; ~8 topics</text>
+
+    <text x="624" y="20" font-size="11" opacity=".6">4. stance model</text>
+    <rect x="624" y="30" width="150" height="60" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="699" y="54" text-anchor="middle">pro / con</text>
+    <text x="699" y="72" text-anchor="middle" font-size="11" opacity=".72">survivors only</text>
+
+    <rect x="812" y="30" width="60" height="60" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="842" y="60" text-anchor="middle" font-size="11">app</text>
+    <text x="842" y="76" text-anchor="middle" font-size="10.5" opacity=".7">cards</text>
+
+    <line x1="158" y1="60" x2="190" y2="60" stroke="currentColor" stroke-width="1.2" marker-end="url(#a4)"></line>
+    <line x1="372" y1="60" x2="404" y2="60" stroke="currentColor" stroke-width="1.2" marker-end="url(#a4)"></line>
+    <line x1="586" y1="60" x2="618" y2="60" stroke="#2E8FA0" stroke-width="1.6" marker-end="url(#a4)"></line>
+    <line x1="774" y1="60" x2="806" y2="60" stroke="currentColor" stroke-width="1.2" marker-end="url(#a4)"></line>
+
+    <text x="284" y="108" text-anchor="middle" font-size="10.5" opacity=".7">per-pair probability</text>
+    <text x="498" y="108" text-anchor="middle" font-size="10.5" fill="#2E8FA0" opacity=".85">reads all 100 rows per topic</text>
+
+    <line x1="8" y1="128" x2="872" y2="128" stroke="currentColor" stroke-width=".6" opacity=".25"></line>
+    <text x="8" y="152" font-size="11" fill="#2E8FA0" opacity=".85">inside stage 3, for one candidate topic</text>
+
+    <rect x="8" y="166" width="196" height="106" rx="4" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3"></rect>
+    <text x="20" y="186" font-size="11" opacity=".8">supported by 37 of 100</text>
+    <text x="20" y="204" font-size="11" opacity=".8">mean p = 0.91</text>
+    <text x="20" y="222" font-size="11" opacity=".8">28 above p 0.9</text>
+    <text x="20" y="240" font-size="11" opacity=".8">cosine rank 3 of 40</text>
+    <text x="20" y="258" font-size="11" opacity=".8">source: pool</text>
+
+    <rect x="268" y="180" width="150" height="78" rx="4" fill="none" stroke="#2E8FA0" stroke-width="1.6"></rect>
+    <text x="343" y="206" text-anchor="middle" fill="#2E8FA0">weighted sum</text>
+    <text x="343" y="226" text-anchor="middle" font-size="11" fill="#2E8FA0" opacity=".85">w&#183;x + b</text>
+    <text x="343" y="246" text-anchor="middle" font-size="11" fill="#2E8FA0" opacity=".85">logistic regression</text>
+
+    <rect x="482" y="180" width="140" height="78" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="552" y="212" text-anchor="middle">p = 0.86</text>
+    <text x="552" y="234" text-anchor="middle" font-size="11" opacity=".72">belongs?</text>
+
+    <rect x="686" y="180" width="150" height="78" rx="4" fill="none" stroke="currentColor" stroke-width="1.2"></rect>
+    <text x="761" y="206" text-anchor="middle">above the bar</text>
+    <text x="761" y="228" text-anchor="middle" font-size="11" opacity=".72">keep this topic</text>
+    <text x="761" y="248" text-anchor="middle" font-size="10.5" opacity=".6">below it: drop</text>
+
+    <line x1="204" y1="219" x2="262" y2="219" stroke="currentColor" stroke-width="1.2" marker-end="url(#a4)"></line>
+    <line x1="418" y1="219" x2="476" y2="219" stroke="#2E8FA0" stroke-width="1.6" marker-end="url(#a4)"></line>
+    <line x1="622" y1="219" x2="680" y2="219" stroke="currentColor" stroke-width="1.2" marker-end="url(#a4)"></line>
+    <text x="106" y="288" text-anchor="middle" font-size="10.5" opacity=".7">features, one row per candidate</text>
+  </g>
+</svg>
+<figcaption><b>Where the final pass sits, and what it does.</b> Today stage 3 does not exist: every
+candidate that survives stage 2 becomes a card, which is why a flood video shows seventeen topics.
+The new stage reads, for each candidate, the <em>whole column</em> of relevance results &#8212; how
+many comments support it, how confidently, and where it came from &#8212; and turns those few numbers
+into one probability that the topic belongs to this video. A bar decides. It is a plain logistic
+regression over about ten features, not a language model: 828 labelled candidates from 25 videos is
+far too little to fine-tune anything larger without it simply memorising the videos.</figcaption>
+</figure>
+
+<section class="col">
+  <h2>Models and what they are worth</h2>
+  <p>Macro-F1 on the held-out <code>new_video_new_topic</code> split &#8212; a video and a topic the
+  model never saw. <b>How many videos that split contains matters as much as the score</b>: EN spans
+  5 held-out videos, NL only 1.</p>
+</section>
+
+<table>
+  <thead><tr><th>Task</th><th>Model</th><th>Context</th><th>Macro-F1</th><th>Test videos</th></tr></thead>
+  <tbody>
+    <tr><td>EN topic</td><td class="api">seqllm_llama_en_binary<br><span style="color:var(--muted)">Llama-3.1-8B</span></td><td>title</td><td class="num">0.848</td><td class="num">5</td></tr>
+    <tr><td>EN stance</td><td class="api">ctx4_gemma_en_root<br><span style="color:var(--muted)">Gemma-2-9B</span></td><td>root comment</td><td class="num">0.721</td><td class="num">5</td></tr>
+    <tr><td>NL topic</td><td class="api">ctx4_gemma_nl_topic_description<br><span style="color:var(--muted)">Gemma-2-9B</span></td><td>description</td><td class="num">0.941</td><td class="num"><span class="tag tag-warn">1</span></td></tr>
+    <tr><td>NL stance</td><td class="api">seqllm_gemma_nl_stance<br><span style="color:var(--muted)">Gemma-2-9B</span></td><td>title</td><td class="num">0.703</td><td class="num"><span class="tag tag-warn">1</span></td></tr>
+  </tbody>
+</table>
+
+<div class="note col"><b>The Dutch figures rest on one video.</b> 0.941 replicates across seeds
+(0.941, 0.951), so the model is stable &#8212; but the Dutch split is 202 rows from a single video,
+and both seeds were scored on that same video. The rerun controlled seed variance, not split
+variance, and more seeds will never tell you which. Dutch validation averages four videos and scores
+<b>0.818</b>; that is the better generalisation estimate.</div>
+
+<section class="col">
+  <h3>On real app data, against human labels</h3>
+</section>
+
+<div class="grid">
+  <div class="card"><div class="k">85.1 %</div><div class="l">EN stance agrees with gold<br>5,952 pairs</div></div>
+  <div class="card"><div class="k">93.3 %</div><div class="l">NL stance agrees with gold<br>2,683 pairs</div></div>
+  <div class="card"><div class="k">0.763 / 0.851</div><div class="l">EN / NL confidence AUROC<br>vs. being correct</div></div>
+  <div class="card"><div class="k">0.39</div><div class="l">EN relevance precision<br>at recall 0.88</div></div>
+</div>
+
+<section class="col">
+  <p>Stance is the strong layer, and the confidence signal is real enough to show a certainty badge
+  &#8212; the Dutch figure of 0.851 overturns an earlier measurement of 0.53 taken from a prompted
+  ensemble rather than a fine-tuned adapter.</p>
+  <div class="note col"><b>Skewed topics are expected, not a defect.</b> Some labels draw a very
+one-sided split &#8212; <code>terrorism</code> 15 pro / 119 con, <code>shooting</code> 7 / 93. That is
+what the audience thinks, and the small minority side is real: people do argue for revenge, or
+against press freedom. Rare, but they occur, and they are worth capturing rather than filtering out.</div>
+
+<div class="note"><b>Topic relevance is the weak layer.</b> The model flags 61&nbsp;% of English
+  pairs relevant where truth is 27&nbsp;%, and assigns 5.05 topics per comment where gold has 2.23.
+  Recall is fine at 0.88; it over-fires when positives are rare. No threshold could be set because
+  <code>prompt_eval.py</code> wrote a constant 0.5 for every binary probability &#8212; fixed, and
+  the re-runs are queued.</div>
+</section>
+
+<section class="col">
+  <h3>If it had to run without a GPU</h3>
+  <p>Encoder classifiers of ~0.4B run on a laptop CPU in seconds. English survives the swap; Dutch
+  does not.</p>
+  <table>
+    <thead><tr><th>Task</th><th>GPU model</th><th>CPU encoder</th><th>Cost</th></tr></thead>
+    <tbody>
+      <tr><td>EN stance</td><td class="num">0.721</td><td class="num">0.715</td><td><span class="tag tag-ok">&#8722;0.6 pts</span></td></tr>
+      <tr><td>EN topic</td><td class="num">0.848</td><td class="num">0.759</td><td><span class="tag tag-acc">&#8722;9 pts</span></td></tr>
+      <tr><td>NL topic</td><td class="num">0.941</td><td class="num">0.605</td><td><span class="tag tag-warn">&#8722;34 pts</span></td></tr>
+      <tr><td>NL stance</td><td class="num">0.703</td><td class="num">0.480</td><td><span class="tag tag-warn">near chance</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="col">
+  <h2>German, French and Russian</h2>
+  <p>These three languages now have their own corpora and, for the first time, a
+  <b>test set verified by a human annotator</b> rather than by model agreement.</p>
+</section>
+
+<table>
+  <thead><tr><th></th><th>corpus</th><th colspan="2">topic (comment &times; topic pairs)</th><th colspan="2">stance (pro/con rows)</th></tr>
+         <tr><th></th><th></th><th>human test</th><th>silver train / val</th><th>human test</th><th>silver train / val</th></tr></thead>
+  <tbody>
+    <tr><td>de</td><td class="num">1,000 comments &middot; 4 videos</td><td class="num">1,976</td><td class="num">13,680 / 3,420</td><td class="num">103</td><td class="num">749 / 191</td></tr>
+    <tr><td>fr</td><td class="num">1,000 &middot; 4</td><td class="num">1,674</td><td class="num">12,960 / 3,240</td><td class="num">112</td><td class="num">905 / 147</td></tr>
+    <tr><td>ru</td><td class="num">1,000 &middot; 4</td><td class="num">1,800</td><td class="num">12,960 / 3,240</td><td class="num">104</td><td class="num">730 / 220</td></tr>
+  </tbody>
+</table>
+<p class="col" style="font-size:14px;color:var(--muted)">Every human test row comes from the same
+100 comments per language; the topic task scores each comment against the whole inventory, the stance
+task only the pairs a human judged relevant with a side. Stance excludes <code>none</code>, matching
+how English and Dutch were trained.</p>
+
+<section class="col">
+  <p><b>All 300 test comments were checked by hand</b>, not sampled. Two models annotated
+  independently &#8212; Claude and GPT-5.5 &#8212; every pair where at least one said "relevant" was
+  checked by a human (430 pairs), and the remaining 74 comments, where both models found nothing, were
+  curated too. Train and test are disjoint by YouTube <code>comment_id</code>.</p>
+  <p>The human check produced findings of its own. <b>Model agreement is not a proxy for
+  correctness</b>: 11&nbsp;% of the pairs both annotators agreed on were overturned, including five
+  outright polarity reversals, three of them irony. And <b>disagreement predicts ambiguity</b> &#8212;
+  the human marked <code>none</code> on 9&nbsp;% of agreed pairs but 43&nbsp;% of relevance
+  disagreements and 59&nbsp;% of stance disagreements.</p>
+</section>
+
+<section class="col">
+  <h3>Are the AI annotations good enough to train on?</h3>
+  <p>Measured against those human decisions &#8212; Cohen&#8217;s &kappa; for relevance, accuracy for
+  stance.</p>
+</section>
+
+<table>
+  <thead><tr><th>Relevance &kappa;</th><th>Claude</th><th>GPT-5.5</th><th>union</th><th>both agree</th></tr></thead>
+  <tbody>
+    <tr><td>de</td><td class="num">0.819</td><td class="num">0.822</td><td class="num">0.833</td><td class="num">0.953 <span style="color:var(--muted)">92% cov.</span></td></tr>
+    <tr><td>fr</td><td class="num">0.782</td><td class="num">0.896</td><td class="num">0.927</td><td class="num">0.993 <span style="color:var(--muted)">88% cov.</span></td></tr>
+    <tr><td>ru</td><td class="num">0.706</td><td class="num">0.955</td><td class="num">0.978</td><td class="num">0.979 <span style="color:var(--muted)">91% cov.</span></td></tr>
+  </tbody>
+</table>
+<table>
+  <thead><tr><th>Stance accuracy</th><th>Claude</th><th>GPT-5.5</th></tr></thead>
+  <tbody>
+    <tr><td>de</td><td class="num">93.5&nbsp;%</td><td class="num">91.0&nbsp;%</td></tr>
+    <tr><td>fr</td><td class="num">91.0&nbsp;%</td><td class="num">97.1&nbsp;%</td></tr>
+    <tr><td>ru</td><td class="num">98.6&nbsp;%</td><td class="num">99.0&nbsp;%</td></tr>
+  </tbody>
+</table>
+
+<section class="col">
+  <p><b>Yes.</b> That justified annotating the remaining 900 comments per language with GPT-5.5
+  &#8212; 2,700 comments, 49,500 silver pairs, for about $14 &#8212; and training on them with the
+  300 human-verified comments held out. Two asymmetries shaped the run: GPT is the stronger annotator
+  where they differ (&kappa; 0.955 against 0.706 in Russian, because Claude systematically
+  under-tags), and German is the weakest language, where both annotators agree with each other while
+  differing from the human.</p>
+  <p>The splits hold out <b>whole threads, from two different videos</b>. Replies carry their root's
+  text as context, so splitting comments at random would put the same root on both sides; and the
+  corpus is exactly ten threads of a hundred per language, so a percentage split would make
+  validation a single conversation.</p>
+</section>
+
+<section class="col">
+  <h2>Status</h2>
+</section>
+
+<table>
+  <thead><tr><th></th><th>state</th></tr></thead>
+  <tbody>
+    <tr class="lead"><td colspan="2">Done</td></tr>
+    <tr><td>DE/FR/RU test sets, 300 comments human-verified</td><td><span class="tag tag-ok">complete</span></td></tr>
+    <tr><td>GPT annotation of 2,700 more comments</td><td><span class="tag tag-ok">complete</span></td></tr>
+    <tr><td>App serving model output for 11 EN + 8 NL videos</td><td><span class="tag tag-ok">live</span></td></tr>
+    <tr><td>Stage-1 evaluation of existing models on authentic DE/FR/RU comments</td><td><span class="tag tag-ok">complete</span></td></tr>
+    <tr class="lead"><td colspan="2">Waiting on the cluster</td></tr>
+    <tr><td>Relevance probabilities &#8594; the threshold that fixes topic precision</td><td><span class="tag tag-warn">4 jobs queued</span></td></tr>
+    <tr><td>First DE/FR/RU models trained on the silver data</td><td><span class="tag tag-warn">6 jobs queued</span></td></tr>
+    <tr class="lead"><td colspan="2">Possible now</td></tr>
+    <tr><td><b>A learned final pass over the candidate topics.</b> The relevance model scores every
+        comment against every candidate; the final pass reads that aggregate &#8212; how many comments
+        support a candidate, at what confidence &#8212; and decides which candidates are really this
+        video&#8217;s topics. 828 labelled candidates over 25 videos are prepared, 95 flagged for a
+        human check</td><td><span class="tag tag-acc">needs the relevance scores</span></td></tr>
+    <tr><td><b>Dutch: train five times, holding out a different video each time.</b> Dutch has five
+        videos and today one of them <em>is</em> the whole test set. Five folds give five estimates and
+        their spread, instead of a single number nobody can check &#8212; not a different video, and not
+        an extra one</td><td><span class="tag tag-acc">5 training runs, ~40 min each</span></td></tr>
+    <tr><td><b>A second AI annotator on the silver data.</b> GPT-5.5 labelled all 2,700 comments
+        alone, so there is no disagreement signal on them. Running Claude over the same comments would
+        restore it &#8212; agreement reached &kappa; 0.95&#8211;0.99 on the test set, and disagreement is
+        what marks the genuinely ambiguous cases. Not a human pass</td>
+        <td><span class="tag tag-acc">~$5, script written</span></td></tr>
+  </tbody>
+</table>
+
+<section class="col">
+  <h2>Open questions</h2>
+  <p>Places where the current answer is unsatisfying and someone thinking freshly could help.</p>
+
+  <h3>1. Multilingual models, and whether English adapters should transfer at all</h3>
+  <p>DE/FR/RU are currently served by English adapters applied cross-lingually. Measured on authentic
+  comments, that transfer is weak &#8212; and stranger, <b>it works best with no context at all</b>:</p>
+  <p><b>Tested on the authentic, human-verified comments</b> &#8212; real German, French and Russian
+  written by commenters, not translated text.</p>
+  <table>
+    <thead><tr><th>English adapter, 0-shot, authentic test set</th><th>none</th><th>title</th><th>root</th><th>description</th></tr></thead>
+    <tbody>
+      <tr><td>de</td><td class="num"><b>0.503</b></td><td class="num">0.496</td><td class="num">0.474</td><td class="num">0.469</td></tr>
+      <tr><td>fr</td><td class="num"><b>0.617</b></td><td class="num">0.520</td><td class="num">0.538</td><td class="num">0.525</td></tr>
+      <tr><td>ru</td><td class="num"><b>0.549</b></td><td class="num">0.460</td><td class="num">0.476</td><td class="num">0.345</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><b>Do not confuse these with the older DE/FR/RU numbers.</b> An earlier round
+  (<code>outputs_translated/</code>, e.g. de topic 0.805, de stance 0.656) was measured on the
+  <em>English test set machine-translated into</em> each language &#8212; 485 topic and 367 stance
+  rows, identical in every language, because it is the same English data. Those figures describe
+  translationese, not real target-language comments, and are consistently higher than the authentic
+  ones above.</div>
+  <p>A German or Russian title appears to be off-distribution noise between the topic and the comment,
+  since the adapter was fine-tuned on English ones. Open: does a genuinely multilingual base
+  (Aya, EuroLLM, XLM-R) beat an English adapter here, and is per-language fine-tuning worth it at
+  900 silver comments per language? Debate-trained German and Russian models already exist and were
+  scored on the new test sets; the comparison is available.</p>
+
+  <h3>2. The topic inventory for an unseen video</h3>
+  <p>Candidates come from Wikipedia&#8217;s controversial-issues list plus YAKE keyphrases from the
+  comments. Ranked against the <em>comment thread</em> rather than the title, they cover roughly
+  70&#8211;80&nbsp;% of annotated comment mass. What fails is <b>selection</b>: a flood video returns
+  <code>Flood</code>, <code>The Genesis Flood</code>, <code>God</code>, <code>Creationism</code> and
+  <code>Biblical literalism</code> as five topics for one argument, and <code>Judas Iscariot</code>
+  alongside them.</p>
+  <p>Four filters were tried and only one half-works: embedding merging fails (it wanted to merge
+  <code>the left</code> with <code>the right</code>, similarity 0.89); diversity re-ranking fails (it
+  cut <code>climate change</code> and kept <code>Judas Iscariot</code>); a Wikipedia category cap
+  fails (no two members of the religion cluster share a single leaf category); lexical containment
+  works on <code>Flood</code>/<code>Genesis Flood</code> but deletes <code>Human rights in China</code>
+  in favour of bare <code>China</code>. Open: is a learned final pass over the relevance model&#8217;s
+  aggregate evidence the right answer, and can it be trained on 25 videos without simply memorising
+  them?</p>
+
+  <h3>3. Evaluation with very few videos</h3>
+  <p>Every split here holds out a handful of videos, and two hold out one. Seeds do not help &#8212;
+  they control the wrong variance. Open: how should a corpus of 4&#8211;8 videos per language be split
+  so a number means something, and is leave-one-video-out with a reported spread the honest minimum?</p>
+</section>
+
+<footer class="col">
+  Status at 2 September 2026. Ten cluster jobs pending. Figures marked as measured come from runs
+  recorded in <code>outputs_human/</code>, <code>outputs_silver/</code> and the app&#8217;s own
+  prediction files; where a number rests on one video or one annotator, the text says so.
+</footer>
+</div>

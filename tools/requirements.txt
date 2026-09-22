@@ -1,0 +1,6 @@
+# Analysis pipeline: fetching new videos and scoring them.
+# The demo itself does not need these -- see backend/requirements.txt.
+pandas==2.2.2
+python-dotenv==1.0.1
+google-api-python-client==2.134.0
+rapidfuzz==3.14.6

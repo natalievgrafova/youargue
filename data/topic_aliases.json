@@ -1,0 +1,5 @@
+{
+  "_comment": "Hand-curated surface-form aliases in the gold labels: two annotators wrote the same target differently. alias -> canonical. Not semantic merging - only labels that are the same target spelled differently belong here.",
+  "en": {"usa": "the usa"},
+  "nl": {}
+}
