@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar'
 
 export const metadata: Metadata = {
   title: 'YouArgue — Political Opinion Monitoring',
-  description: 'Real-time argument mining from YouTube political discussions',
+  description: 'Real-time opinion analysis from YouTube political discussions',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

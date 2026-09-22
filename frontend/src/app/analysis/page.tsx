@@ -112,7 +112,7 @@ export default function AnalysisPage() {
     <div className="mx-auto max-w-7xl px-6 py-8 space-y-8">
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold text-white">Argument Mining</h1>
+        <h1 className="text-3xl font-bold text-white">Opinion Analysis</h1>
         <p className="mt-1 text-slate-400 text-sm max-w-xl">
           Explore how public opinion distributes across topics in political YouTube discussions.
           Select a video from our annotated corpus to see PRO and CON stances per topic.
