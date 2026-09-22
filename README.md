@@ -79,10 +79,17 @@ predictions were produced this way.
 | `topic_pool/` | the curated inventory: 246 targets, 2,665 surface forms |
 | `tools/` | the analysis pipeline |
 
-## Licence
+## Licence and use
+
+**This repository is provided for peer review and academic research only.**
+The annotated corpora, the model predictions and the curated inventory may be
+used to verify and build on the work described in the paper. They may not be
+used commercially, to profile individuals, or to train systems for either
+purpose.
 
 Code is released under the MIT licence (`LICENSE`). The curated target
-inventory and our annotations are released under CC BY 4.0.
+inventory and our annotations are released under CC BY-NC 4.0, which permits
+reuse with attribution for non-commercial purposes.
 
 The relevance and stance adapters are LoRA weights over Gemma-2-9B-it and are
 therefore governed by the **Gemma Terms of Use**, not by an open-source licence.
