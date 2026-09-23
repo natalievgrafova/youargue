@@ -63,23 +63,26 @@ If PowerShell blocks the activation script, run
 Open <http://localhost:3000/analysis>, pick a language and a video, and click any
 target to see the comments on each side, ordered by model confidence.
 
-## The dashboard and live retrieval
+## The dashboard
 
-The demonstration video shows the system running against the live YouTube Data
-API. This package reproduces everything except live retrieval: without a key
-the dashboard serves a frozen snapshot of 2025 regardless of the date window
-selected, so the video list will differ from the one in the video. The analysis
-view is identical either way. To fetch live data, put your own key in
-`.env` (see `.env.example`):
+The dashboard serves a frozen snapshot of 2025 for all five channels, with real
+titles, view and comment counts, and links to the videos. It is the same data
+for every viewer, needs no API key, and is de-identified like the rest of the
+release. The date window does not change it.
+
+Live retrieval from the YouTube Data API is opt-in, because the API returns
+usernames that we do not redistribute. To enable it, put a key in `.env` (see
+`.env.example`) and set `YOUARGUE_LIVE=1`:
 
 ```
 YOUTUBE_API=your-key-here
+YOUARGUE_LIVE=1
 ```
 
 Analysing a *new* video additionally requires `tools/requirements.txt` and a
 GPU: `tools/analyse_video.py` fetches the comments, matches the curated
 inventory against them, and runs the relevance and stance models. The bundled
-predictions were produced this way. Important: The YouTube API does not remove the usernames, so the dashboard does show the usernames in the comments preview mode, but does not allow access to the full version of each comment. The analysis page that provides the detailed comment view replaces all usernames with placeholders. 
+predictions were produced this way.
 
 ## What is included
 

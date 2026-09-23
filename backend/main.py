@@ -132,10 +132,15 @@ def fetch_channel_videos(ch: dict, start_date: str, end_date: str) -> list:
     if cached and time.time() - cached["ts"] < CACHE_TTL:
         return cached["data"]
 
+    # The dashboard serves the committed snapshot by default: it is
+    # de-identified, it works without an API key, and every viewer sees the
+    # same thing. Live retrieval returns usernames straight from the API, so it
+    # is opt-in via YOUARGUE_LIVE=1.
+    if os.getenv("YOUARGUE_LIVE", "").strip() not in ("1", "true", "True"):
+        return _snapshot_videos(ch["id"])
+
     yt = get_yt()
     if not yt:
-        # No API key: serve the committed snapshot so the dashboard works out of
-        # the box. A reviewer who supplies a key gets live data instead.
         return _snapshot_videos(ch["id"])
 
     try:
