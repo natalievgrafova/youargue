@@ -158,8 +158,13 @@ def fetch_channel_videos(ch: dict, start_date: str, end_date: str) -> list:
             if "videoId" in i.get("id", {})
         ]
         if not ids:
-            _yt_cache[cache_key] = {"ts": time.time(), "data": []}
-            return []
+            # The live call succeeded but returned nothing for this window.
+            snap = _snapshot_videos(ch["id"])
+            if snap:
+                print(f"No live results for {ch['id']} in {start_date}..{end_date}"
+                      f" -- serving snapshot ({len(snap)} videos)")
+            _yt_cache[cache_key] = {"ts": time.time(), "data": snap}
+            return snap
 
         details = yt.videos().list(part="snippet,statistics", id=",".join(ids)).execute()
 
@@ -195,8 +200,10 @@ def fetch_channel_videos(ch: dict, start_date: str, end_date: str) -> list:
         return videos
 
     except Exception as e:
-        print(f"YouTube error for {ch['id']}: {e}")
-        return []
+        # Quota exhaustion, a network failure or a bad key all land here. Fall
+        # back to the snapshot rather than showing an empty dashboard.
+        print(f"YouTube error for {ch['id']}: {e} -- falling back to snapshot")
+        return _snapshot_videos(ch["id"])
 
 
 @app.get("/api/channels")
