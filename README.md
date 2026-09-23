@@ -1,4 +1,4 @@
-# YouArgue — Political Opinion Monitoring
+# YouArgue — Political Opinion Monitoring Tool Preview
 
 Multilingual political opinion monitoring over YouTube news comment sections in
 English, Dutch, German, French and Russian. Given a video, the system selects
@@ -14,7 +14,8 @@ frozen at the time of writing, so that the results reported in the paper can be
 inspected and reproduced. The trained adapters are not included -- they are
 available under gated access on Hugging Face -- and the training code is not
 part of this release. Analysing a new video therefore requires the models,
-obtained separately.
+obtained separately. If you want to use the full system, please send an email request
+to natalia.evgrafova@ugent.be from your institutional email.
 
 ## Running it
 
@@ -75,7 +76,7 @@ YOUTUBE_API=your-key-here
 Analysing a *new* video additionally requires `tools/requirements.txt` and a
 GPU: `tools/analyse_video.py` fetches the comments, matches the curated
 inventory against them, and runs the relevance and stance models. The bundled
-predictions were produced this way.
+predictions were produced this way. Important: The YouTube API does not remove the usernames, so the dashboard does show the usernames in the comments preview mode, but does not allow access to the full version of each comment. The analysis page that provides the detailed comment view replaces all usernames with placeholders. 
 
 ## What is included
 
