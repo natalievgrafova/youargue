@@ -1,5 +1,8 @@
 # YouArgue — Political Opinion Monitoring Tool Preview
 
+Disclaimer: The system was designed by researchers at Ghent University and
+implemented with the assistance of Claude Code (Claude Opus 5).
+
 Multilingual political opinion monitoring over YouTube news comment sections in
 English, Dutch, German, French and Russian. Given a video, the system selects
 candidate stance targets from a curated inventory by matching per-language
